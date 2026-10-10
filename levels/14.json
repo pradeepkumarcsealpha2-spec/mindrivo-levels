@@ -1,0 +1,18 @@
+{
+  "id": 14,
+  "type": "Logic",
+  "title": "Find the Odd One Out",
+  "prompt": "Which one is different?",
+  "options": [
+    "Apple",
+    "Banana",
+    "Carrot"
+  ],
+  "answer": "Carrot",
+  "hint": [
+    "Think about which items are usually fruits.",
+    "One item is usually classified as a vegetable."
+  ],
+  "explanation": "Carrot is usually classified as a vegetable, while apple and banana are fruits.",
+  "difficulty": 2
+}
