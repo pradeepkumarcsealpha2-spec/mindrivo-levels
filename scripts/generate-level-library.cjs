@@ -67,8 +67,8 @@ for (let id=firstRemoteLevel; id<=maxLevel; id++) {
   if(!chunks.has(chunk)) chunks.set(chunk,[]);
   const familyId=families[(id-11)%families.length];
   chunks.get(chunk).push({id,contentId:`mindrivo-level-${String(id).padStart(6,"0")}`,familyId,difficulty:Math.min(10,Math.floor((id-1)/10000)+1),url:`levels/${id}.json`});
-  const output=path.join(levelsDir,`${id}.json`), curated=path.join(repoRoot,"static-levels","levels",`${id}.json`);
-  if((id===11||id===12)&&fs.existsSync(curated)) fs.copyFileSync(curated,output);
+  const output=path.join(levelsDir,`${id}.json`), curated=path.join(repoRoot,"levels",`${id}.json`);
+  if(id<=17&&fs.existsSync(curated)) fs.copyFileSync(curated,output);
   else fs.writeFileSync(output,JSON.stringify(makeLevel(id)));
 }
 for(let chunk=0;chunk<Math.ceil(maxLevel/indexChunkSize);chunk++) {
