@@ -1,0 +1,18 @@
+{
+  "id": 12,
+  "type": "Addition",
+  "title": "Balance the Numbers",
+  "prompt": "3 + 4 = ?",
+  "options": [
+    "6",
+    "7",
+    "8"
+  ],
+  "answer": "7",
+  "hint": [
+    "Start at 3 and count four steps forward.",
+    "3, 4, 5, 6, 7."
+  ],
+  "explanation": "3 + 4 = 7.",
+  "difficulty": 2
+}
