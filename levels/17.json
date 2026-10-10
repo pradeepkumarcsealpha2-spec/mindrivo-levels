@@ -1,0 +1,18 @@
+{
+  "id": 17,
+  "type": "Visual reasoning",
+  "title": "Count the Shapes",
+  "prompt": "How many sides does a triangle have?",
+  "options": [
+    "2",
+    "3",
+    "4"
+  ],
+  "answer": "3",
+  "hint": [
+    "A triangle is a shape with three straight edges.",
+    "Count its sides: one, two, three."
+  ],
+  "explanation": "A triangle has 3 sides.",
+  "difficulty": 1
+}
