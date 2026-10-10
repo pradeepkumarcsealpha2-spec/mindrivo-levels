@@ -15,6 +15,41 @@
       "familyId": "number-balance",
       "difficulty": 2,
       "url": "levels/12.json"
+    },
+    {
+      "id": 13,
+      "contentId": "mind-one-013",
+      "familyId": "number-pattern",
+      "difficulty": 2,
+      "url": "levels/13.json"
+    },
+    {
+      "id": 14,
+      "contentId": "mind-one-014",
+      "familyId": "odd-one-out",
+      "difficulty": 2,
+      "url": "levels/14.json"
+    },
+    {
+      "id": 15,
+      "contentId": "mind-one-015",
+      "familyId": "addition",
+      "difficulty": 2,
+      "url": "levels/15.json"
+    },
+    {
+      "id": 16,
+      "contentId": "mind-one-016",
+      "familyId": "number-sequence",
+      "difficulty": 2,
+      "url": "levels/16.json"
+    },
+    {
+      "id": 17,
+      "contentId": "mind-one-017",
+      "familyId": "shape-count",
+      "difficulty": 1,
+      "url": "levels/17.json"
     }
   ]
 }
