@@ -16,17 +16,14 @@ concurrency:
 
 jobs:
   validate-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Set up job
+        run: echo "Starting static library publication"
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Generate indexed 100,000-level library
         run: node scripts/generate-level-library.cjs static-levels-generated
-
       - name: Validate every generated level and index
         run: |
           node --input-type=module <<'NODE'
@@ -57,17 +54,16 @@ jobs:
           for (let id = 11; id <= 100000; id++) if (!seen.has(id)) throw new Error('Missing level ' + id);
           console.log('Validated all ' + seen.size + ' remote levels and 1,000 indexes.');
           NODE
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: static-levels-generated
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
