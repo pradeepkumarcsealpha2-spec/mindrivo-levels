@@ -2,7 +2,7 @@ name: Publish Mindrivo level content
 
 on:
   push:
-    branches: [main]
+    branches: [main, publish-100k-library]
   workflow_dispatch:
 
 permissions:
@@ -24,29 +24,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate manifest and level files
+      - name: Generate indexed 100,000-level library
+        run: node scripts/generate-level-library.cjs static-levels-generated
+
+      - name: Validate every generated level and index
         run: |
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-          if (!Array.isArray(manifest.levels)) throw new Error('manifest.json must contain a levels array');
+          import path from 'node:path';
+          const root = 'static-levels-generated';
+          const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+          if (manifest.maxLevel !== 100000 || manifest.indexChunkSize !== 100 || manifest.levelIndexTemplate !== 'indexes/{chunk}.json') throw new Error('Unexpected generated manifest');
           const seen = new Set();
-          for (const entry of manifest.levels) {
-            const id = Number(entry.id);
-            if (!Number.isInteger(id) || id <= 10 || id > 100000 || seen.has(id)) throw new Error(`Invalid or duplicate remote level ID: ${entry.id}`);
-            if (typeof entry.url !== 'string' || !entry.url || entry.url.startsWith('/') || entry.url.includes('..')) throw new Error(`Invalid relative URL for level ${id}`);
-            const file = entry.url;
-            if (!fs.existsSync(file)) throw new Error(`Missing content file: ${file}`);
-            const level = JSON.parse(fs.readFileSync(file, 'utf8'));
-            if (Number(level.id) !== id) throw new Error(`ID mismatch for level ${id}`);
-            if (!Array.isArray(level.options) || level.options.length < 2 || new Set(level.options.map(String)).size !== level.options.length) throw new Error(`Invalid options for level ${id}`);
-            if (level.options.filter(x => String(x) === String(level.answer)).length !== 1) throw new Error(`Answer must appear exactly once for level ${id}`);
-            if (!Array.isArray(level.hint) || !level.hint.length || level.hint.some(x => typeof x !== 'string' || !x.trim())) throw new Error(`Invalid hints for level ${id}`);
-            if (typeof level.prompt !== 'string' || !level.prompt.trim() || typeof level.explanation !== 'string' || !level.explanation.trim()) throw new Error(`Missing prompt/explanation for level ${id}`);
-            seen.add(id);
+          for (let chunk = 0; chunk < 1000; chunk++) {
+            const name = String(chunk).padStart(3, '0');
+            const index = JSON.parse(fs.readFileSync(path.join(root, 'indexes', name + '.json'), 'utf8'));
+            if (!Array.isArray(index.levels)) throw new Error('Invalid index ' + name);
+            for (const entry of index.levels) {
+              const id = Number(entry.id);
+              if (!Number.isInteger(id) || id < 11 || id > 100000 || seen.has(id)) throw new Error('Invalid/duplicate indexed ID ' + entry.id);
+              if (entry.url !== 'levels/' + id + '.json') throw new Error('Unexpected content URL for ' + id);
+              const level = JSON.parse(fs.readFileSync(path.join(root, entry.url), 'utf8'));
+              if (Number(level.id) !== id) throw new Error('ID mismatch for ' + id);
+              if (!Array.isArray(level.options) || level.options.length < 2 || new Set(level.options.map(String)).size !== level.options.length) throw new Error('Invalid options for ' + id);
+              if (level.options.filter(x => String(x) === String(level.answer)).length !== 1) throw new Error('Answer must occur exactly once for ' + id);
+              if (!Array.isArray(level.hint) || !level.hint.length || level.hint.some(x => typeof x !== 'string' || !x.trim())) throw new Error('Invalid hints for ' + id);
+              if (typeof level.prompt !== 'string' || !level.prompt.trim() || typeof level.explanation !== 'string' || !level.explanation.trim()) throw new Error('Missing prompt/explanation for ' + id);
+              seen.add(id);
+            }
           }
-          if (seen.size === 0) throw new Error('No remote levels found');
-          console.log(`Validated ${seen.size} remote levels.`);
+          if (seen.size !== 99990) throw new Error('Expected 99,990 remote levels; found ' + seen.size);
+          for (let id = 11; id <= 100000; id++) if (!seen.has(id)) throw new Error('Missing level ' + id);
+          console.log('Validated all ' + seen.size + ' remote levels and 1,000 indexes.');
           NODE
 
       - name: Configure Pages
@@ -57,7 +66,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: static-levels-generated
 
       - name: Deploy to GitHub Pages
         id: deployment
