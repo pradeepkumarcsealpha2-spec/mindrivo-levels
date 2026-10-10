@@ -1,0 +1,18 @@
+{
+  "id": 16,
+  "type": "Number reasoning",
+  "title": "The Missing Number",
+  "prompt": "10, 20, 30, ?",
+  "options": [
+    "35",
+    "40",
+    "50"
+  ],
+  "answer": "40",
+  "hint": [
+    "Each number increases by ten.",
+    "Add 10 to 30."
+  ],
+  "explanation": "The sequence increases by 10 each time, so the next number is 40.",
+  "difficulty": 2
+}
