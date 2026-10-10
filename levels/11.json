@@ -1,0 +1,18 @@
+{
+  "id": 11,
+  "type": "Visual reasoning",
+  "title": "Mirror Match",
+  "prompt": "Which symbol is the mirror image of ◁?",
+  "options": [
+    "▷",
+    "◁",
+    "▽"
+  ],
+  "answer": "▷",
+  "hint": [
+    "A mirror flips left and right.",
+    "The point faces the opposite direction."
+  ],
+  "explanation": "The mirror image points right.",
+  "difficulty": 2
+}
