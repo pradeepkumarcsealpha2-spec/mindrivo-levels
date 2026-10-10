@@ -1,0 +1,18 @@
+{
+  "id": 13,
+  "type": "Pattern recognition",
+  "title": "Complete the Pattern",
+  "prompt": "2, 4, 6, 8, ?",
+  "options": [
+    "9",
+    "10",
+    "12"
+  ],
+  "answer": "10",
+  "hint": [
+    "The numbers increase by the same amount each time.",
+    "Add 2 to 8."
+  ],
+  "explanation": "The pattern adds 2 each time, so 8 + 2 = 10.",
+  "difficulty": 2
+}
