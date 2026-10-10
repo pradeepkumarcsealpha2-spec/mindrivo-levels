@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "notice": "Public game content only. Never put player data here.",
+  "levels": [
+    {
+      "id": 11,
+      "contentId": "mind-one-011",
+      "familyId": "mirror-match",
+      "difficulty": 2,
+      "url": "levels/11.json"
+    },
+    {
+      "id": 12,
+      "contentId": "mind-one-012",
+      "familyId": "number-balance",
+      "difficulty": 2,
+      "url": "levels/12.json"
+    }
+  ]
+}
