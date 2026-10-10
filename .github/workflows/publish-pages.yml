@@ -1,0 +1,62 @@
+name: Publish Mindrivo level content
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  validate-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate manifest and level files
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+          if (!Array.isArray(manifest.levels)) throw new Error('manifest.json must contain a levels array');
+          const seen = new Set();
+          for (const entry of manifest.levels) {
+            const id = Number(entry.id);
+            if (!Number.isInteger(id) || id <= 10 || id > 100000 || seen.has(id)) throw new Error(`Invalid or duplicate remote level ID: ${entry.id}`);
+            if (typeof entry.url !== 'string' || !entry.url || entry.url.startsWith('/') || entry.url.includes('..')) throw new Error(`Invalid relative URL for level ${id}`);
+            const file = entry.url;
+            if (!fs.existsSync(file)) throw new Error(`Missing content file: ${file}`);
+            const level = JSON.parse(fs.readFileSync(file, 'utf8'));
+            if (Number(level.id) !== id) throw new Error(`ID mismatch for level ${id}`);
+            if (!Array.isArray(level.options) || level.options.length < 2 || new Set(level.options.map(String)).size !== level.options.length) throw new Error(`Invalid options for level ${id}`);
+            if (level.options.filter(x => String(x) === String(level.answer)).length !== 1) throw new Error(`Answer must appear exactly once for level ${id}`);
+            if (!Array.isArray(level.hint) || !level.hint.length || level.hint.some(x => typeof x !== 'string' || !x.trim())) throw new Error(`Invalid hints for level ${id}`);
+            if (typeof level.prompt !== 'string' || !level.prompt.trim() || typeof level.explanation !== 'string' || !level.explanation.trim()) throw new Error(`Missing prompt/explanation for level ${id}`);
+            seen.add(id);
+          }
+          if (seen.size === 0) throw new Error('No remote levels found');
+          console.log(`Validated ${seen.size} remote levels.`);
+          NODE
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
