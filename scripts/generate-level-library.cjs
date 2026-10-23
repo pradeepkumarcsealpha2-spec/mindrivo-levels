@@ -13,6 +13,28 @@ fs.mkdirSync(levelsDir, { recursive: true });
 fs.mkdirSync(indexesDir, { recursive: true });
 const families = ["addition","subtraction","multiplication","ascending-sequence","descending-sequence","even-or-odd","largest-number","shape-pattern","everyday-math","number-gap"];
 const symbols = ["🔴","🔵","🟢","⭐"];
+const everydayItems = [
+  { singular: "pencil", plural: "pencils" },
+  { singular: "apple", plural: "apples" },
+  { singular: "notebook", plural: "notebooks" },
+  { singular: "sticker", plural: "stickers" },
+  { singular: "orange", plural: "oranges" },
+  { singular: "crayon", plural: "crayons" },
+  { singular: "book", plural: "books" },
+  { singular: "toy", plural: "toys" },
+  { singular: "ball", plural: "balls" },
+  { singular: "cookie", plural: "cookies" }
+];
+function pairFromIndex(index) {
+  const maximum = Math.floor((1 + Math.sqrt(1 + 8 * index)) / 2) + 1;
+  const firstIndexForMaximum = ((maximum - 2) * (maximum - 1)) / 2;
+  return [2 + (index - firstIndexForMaximum), maximum];
+}
+function skipReservedIndex(index, reservedIndexes) {
+  let adjusted = index;
+  for (const reservedIndex of reservedIndexes) if (adjusted >= reservedIndex) adjusted++;
+  return adjusted;
+}
 function options(answer, candidates) {
   const result = [String(answer)];
   for (const item of candidates) if (!result.includes(String(item)) && result.push(String(item)) && result.length === 3) break;
@@ -22,45 +44,132 @@ function options(answer, candidates) {
 }
 function makeLevel(id) {
   const difficulty = Math.min(10, Math.floor((id - 1) / 10000) + 1);
-  const range = 10 + difficulty * 20;
   const family = families[(id - 11) % families.length];
-  const a = 2 + ((id * 7) % range), b = 1 + ((id * 13) % range), c = 3 + ((id * 17) % range);
+  const sequenceIndex = Math.floor((id - 11) / families.length);
   let prompt, answer, opts, hint, explanation, type, title;
+
   switch (family) {
-    case "addition":
-      answer=a+b; prompt=`${a} + ${b} = ?`; opts=options(answer,[answer+2,answer-1,answer+1]); type="Number reasoning"; title="Add the numbers"; hint=["Combine both numbers.",`Start at ${a} and count forward ${b} steps.`]; explanation=`${a} + ${b} = ${answer}.`; break;
+    case "addition": {
+      // Skip prompts already used by the curated levels (3 + 4 and 5 + 6).
+      const [a, b] = pairFromIndex(skipReservedIndex(sequenceIndex, [4, 13]));
+      answer = a + b;
+      prompt = `${a} + ${b} = ?`;
+      opts = options(answer, [answer + 2, answer - 1, answer + 1]);
+      type = "Number reasoning"; title = "Add the numbers";
+      hint = ["Combine both numbers.", `Start at ${a} and count forward ${b} steps.`];
+      explanation = `${a} + ${b} = ${answer}.`;
+      break;
+    }
     case "subtraction": {
-      const larger=Math.max(a,b)+difficulty, smaller=Math.min(a,b); answer=larger-smaller; prompt=`${larger} − ${smaller} = ?`; opts=options(answer,[answer+2,Math.max(0,answer-2),answer+1]); type="Number reasoning"; title="Find the difference"; hint=["Take the smaller number away.",`Count backwards ${smaller} steps from ${larger}.`]; explanation=`${larger} − ${smaller} = ${answer}.`; break;
+      const [smaller, larger] = pairFromIndex(sequenceIndex + 1);
+      answer = larger - smaller;
+      prompt = `${larger} − ${smaller} = ?`;
+      opts = options(answer, [answer + 2, Math.max(0, answer - 2), answer + 1]);
+      type = "Number reasoning"; title = "Find the difference";
+      hint = ["Take the smaller number away.", `Count backwards ${smaller} steps from ${larger}.`];
+      explanation = `${larger} − ${smaller} = ${answer}.`;
+      break;
     }
     case "multiplication": {
-      const x=2+((id*3)%(5+difficulty)), y=2+((id*5)%(5+difficulty)); answer=x*y; prompt=`${x} × ${y} = ?`; opts=options(answer,[answer+x,Math.max(1,answer-y),answer+1]); type="Number reasoning"; title="Multiply the numbers"; hint=["Think of equal groups.",`${x} groups of ${y} make the total.`]; explanation=`${x} × ${y} = ${answer}.`; break;
+      const [x, y] = pairFromIndex(sequenceIndex);
+      answer = x * y;
+      prompt = `${x} × ${y} = ?`;
+      opts = options(answer, [answer + x, Math.max(1, answer - y), answer + 1]);
+      type = "Number reasoning"; title = "Multiply the numbers";
+      hint = ["Think of equal groups.", `${x} groups of ${y} make the total.`];
+      explanation = `${x} × ${y} = ${answer}.`;
+      break;
     }
     case "ascending-sequence": {
-      const start=1+((id*11)%range), step=1+((id*3)%(2+difficulty)); answer=start+4*step; prompt=`${start}, ${start+step}, ${start+2*step}, ${start+3*step}, ?`; opts=options(answer,[answer+step,answer-step,answer+1]); type="Number pattern"; title="Continue the sequence"; hint=["Look at how much the numbers change.",`Each number increases by ${step}.`]; explanation=`Add ${step} each time; the next number is ${answer}.`; break;
+      // Skip the curated "2, 4, 6, 8, ?" prompt.
+      const index = skipReservedIndex(sequenceIndex, [101]);
+      const start = 1 + (index % 100);
+      const step = 1 + Math.floor(index / 100);
+      answer = start + 4 * step;
+      prompt = `${start}, ${start + step}, ${start + 2 * step}, ${start + 3 * step}, ?`;
+      opts = options(answer, [answer + step, answer - step, answer + 1]);
+      type = "Number pattern"; title = "Continue the sequence";
+      hint = ["Look at how much the numbers change.", `Each number increases by ${step}.`];
+      explanation = `Add ${step} each time; the next number is ${answer}.`;
+      break;
     }
     case "descending-sequence": {
-      const step=1+((id*5)%(2+difficulty)), start=50+difficulty*20+((id*7)%range); answer=start-4*step; prompt=`${start}, ${start-step}, ${start-2*step}, ${start-3*step}, ?`; opts=options(answer,[answer-step,answer+step,answer-2*step]); type="Number pattern"; title="Follow the countdown"; hint=["The numbers are getting smaller.",`Subtract ${step} each time.`]; explanation=`Subtract ${step} each time; the next number is ${answer}.`; break;
+      const step = 1 + Math.floor(sequenceIndex / 100);
+      const start = 10 + (sequenceIndex % 100) + 4 * step;
+      answer = start - 4 * step;
+      prompt = `${start}, ${start - step}, ${start - 2 * step}, ${start - 3 * step}, ?`;
+      opts = options(answer, [Math.max(0, answer - step), answer + step, Math.max(0, answer - 2 * step)]);
+      type = "Number pattern"; title = "Follow the countdown";
+      hint = ["The numbers are getting smaller.", `Subtract ${step} each time.`];
+      explanation = `Subtract ${step} each time; the next number is ${answer}.`;
+      break;
     }
     case "even-or-odd": {
-      const number=10+((id*19)%(range*10)); answer=number%2===0?"Even":"Odd"; prompt=`Is ${number} an even number or an odd number?`; opts=["Even","Odd","Neither"]; type="Number sense"; title="Even or odd?"; hint=["Check the last digit.","Numbers ending in 0, 2, 4, 6, or 8 are even."]; explanation=`${number} is ${answer.toLowerCase()} because its last digit is ${String(number).slice(-1)}.`; break;
+      const number = sequenceIndex + 2;
+      answer = number % 2 === 0 ? "Even" : "Odd";
+      prompt = `Is ${number} an even number or an odd number?`;
+      opts = ["Even", "Odd", "Neither"];
+      type = "Number sense"; title = "Even or odd?";
+      hint = ["Check the last digit.", "Numbers ending in 0, 2, 4, 6, or 8 are even."];
+      explanation = `${number} is ${answer.toLowerCase()} because its last digit is ${String(number).slice(-1)}.`;
+      break;
     }
     case "largest-number": {
-      const values=[a+(id%5),b+((id+3)%7),c+((id+5)%9)]; values[1]+=values[1]===values[0]?2:0; values[2]+=values[2]===values[0]||values[2]===values[1]?3:0; answer=String(Math.max(...values)); prompt=`Which number is the largest: ${values.join(", ")}?`; opts=new Set(values.map(String)).size===3?values.map(String):options(answer,values.map(v=>v+1)); type="Comparison"; title="Compare the numbers"; hint=["Compare the numbers one by one.",`${answer} is greater than the other choices.`]; explanation=`${answer} is the largest number in the list.`; break;
+      let a = 1 + (sequenceIndex % 100);
+      const b = 1 + Math.floor(sequenceIndex / 100);
+      if (a === b) a += 100;
+      let c = 1 + ((sequenceIndex * 37 + 11) % 100);
+      while (c === a || c === b) c = (c % 100) + 1;
+      const values = [a, b, c];
+      answer = String(Math.max(...values));
+      prompt = `Which number is the largest: ${values.join(", ")}?`;
+      opts = values.map(String);
+      type = "Comparison"; title = "Compare the numbers";
+      hint = ["Compare the numbers one by one.", `${answer} is greater than the other choices.`];
+      explanation = `${answer} is the largest number in the list.`;
+      break;
     }
     case "shape-pattern": {
-      const group=2+(id%3), first=id%symbols.length, second=(first+1+(id%2))%symbols.length, pattern=[];
-      for(let i=0;i<group*2+1;i++) pattern.push(i%(group+1)===0?symbols[first]:symbols[second]);
-      answer=symbols[second]; prompt=`${pattern.join(" ")} ?`; opts=[symbols[first],symbols[second],symbols[(second+1)%symbols.length]]; type="Visual reasoning"; title="Spot the pattern"; hint=["Look for the repeating group.","The same small group appears again and again."]; explanation=`The pattern repeats ${symbols[first]} followed by ${symbols[second]} symbols; the next symbol is ${answer}.`; break;
+      let value = sequenceIndex + 4;
+      const digits = [];
+      while (value > 0) { digits.push(value % 4); value = Math.floor(value / 4); }
+      digits.reverse();
+      const cycle = digits.map(digit => symbols[digit]);
+      answer = cycle[0];
+      prompt = `${cycle.concat(cycle).join(" ")} ?`;
+      opts = [answer, symbols[(digits[0] + 1) % symbols.length], symbols[(digits[0] + 2) % symbols.length]];
+      type = "Visual reasoning"; title = "Spot the repeating pattern";
+      hint = ["Look for the repeating group.", "The same group appears twice; what comes next?"];
+      explanation = `The ${cycle.length}-symbol group repeats; the next symbol is ${answer}.`;
+      break;
     }
     case "everyday-math": {
-      const price=2+((id*7)%range), count=2+(id%5); answer=price*count; prompt=`One notebook costs ${price} coins. How many coins do ${count} notebooks cost?`; opts=options(answer,[answer+price,Math.max(0,answer-price),answer+2]); type="Everyday maths"; title="Solve a daily-life problem"; hint=["Multiply the cost of one item by the number of items.",`${count} groups of ${price} coins make the total.`]; explanation=`${count} × ${price} = ${answer} coins.`; break;
+      const item = everydayItems[sequenceIndex % everydayItems.length];
+      const price = 1 + (Math.floor(sequenceIndex / 10) % 100);
+      const count = 2 + Math.floor(sequenceIndex / 1000);
+      answer = price * count;
+      prompt = `One ${item.singular} costs ${price} ${price === 1 ? "coin" : "coins"}. How many coins do ${count} ${item.plural} cost?`;
+      opts = options(answer, [answer + price, Math.max(0, answer - price), answer + 2]);
+      type = "Everyday maths"; title = "Solve a daily-life problem";
+      hint = ["Multiply the cost of one item by the number of items.", `${count} groups of ${price} coins make the total.`];
+      explanation = `${count} × ${price} = ${answer} coins.`;
+      break;
     }
     default: {
-      const step=1+(id%(3+difficulty)), start=5+((id*11)%range); answer=start+2*step; prompt=`${start}, ${start+step}, __, ${start+3*step}. Which number is missing?`; opts=options(answer,[answer+step,answer-step,answer+1]); type="Number pattern"; title="Find the missing number"; hint=["Check the difference between nearby numbers.",`Add ${step} each time.`]; explanation=`The missing number is ${answer}.`; break;
+      const step = 1 + Math.floor(sequenceIndex / 100);
+      const start = 1 + (sequenceIndex % 100);
+      answer = start + 2 * step;
+      prompt = `${start}, ${start + step}, __, ${start + 3 * step}. Which number is missing?`;
+      opts = options(answer, [answer + step, answer - step, answer + 1]);
+      type = "Number pattern"; title = "Find the missing number";
+      hint = ["Check the difference between nearby numbers.", `Add ${step} each time.`];
+      explanation = `The missing number is ${answer}.`;
+      break;
     }
   }
-  return { id, type, title, prompt, options:opts, answer:String(answer), hint, explanation, difficulty };
+  return { id, type, title, prompt, options: opts, answer: String(answer), hint, explanation, difficulty };
 }
+
 const chunks = new Map();
 for (let id=firstRemoteLevel; id<=maxLevel; id++) {
   const chunk=Math.floor((id-1)/indexChunkSize);

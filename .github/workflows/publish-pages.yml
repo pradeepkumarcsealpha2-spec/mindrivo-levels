@@ -11,8 +11,10 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  # Publish one validated content snapshot at a time; never cancel an active deployment.
+  group: mindrivo-level-content-publish
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   validate-and-deploy:
@@ -33,6 +35,7 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
           if (manifest.maxLevel !== 100000 || manifest.indexChunkSize !== 100 || manifest.levelIndexTemplate !== 'indexes/{chunk}.json') throw new Error('Unexpected generated manifest');
           const seen = new Set();
+          const seenPrompts = new Map();
           for (let chunk = 0; chunk < 1000; chunk++) {
             const name = String(chunk).padStart(3, '0');
             const index = JSON.parse(fs.readFileSync(path.join(root, 'indexes', name + '.json'), 'utf8'));
@@ -47,12 +50,15 @@ jobs:
               if (level.options.filter(x => String(x) === String(level.answer)).length !== 1) throw new Error('Answer must occur exactly once for ' + id);
               if (!Array.isArray(level.hint) || !level.hint.length || level.hint.some(x => typeof x !== 'string' || !x.trim())) throw new Error('Invalid hints for ' + id);
               if (typeof level.prompt !== 'string' || !level.prompt.trim() || typeof level.explanation !== 'string' || !level.explanation.trim()) throw new Error('Missing prompt/explanation for ' + id);
+              const normalizedPrompt = level.prompt.trim().replace(/\\s+/g, ' ').toLowerCase();
+              if (seenPrompts.has(normalizedPrompt)) throw new Error('Duplicate prompt for levels ' + seenPrompts.get(normalizedPrompt) + ' and ' + id);
+              seenPrompts.set(normalizedPrompt, id);
               seen.add(id);
             }
           }
           if (seen.size !== 99990) throw new Error('Expected 99,990 remote levels; found ' + seen.size);
           for (let id = 11; id <= 100000; id++) if (!seen.has(id)) throw new Error('Missing level ' + id);
-          console.log('Validated all ' + seen.size + ' remote levels and 1,000 indexes.');
+          console.log('Validated all ' + seen.size + ' remote levels, unique prompts, and 1,000 indexes.');
           NODE
       - name: Configure Pages
         uses: actions/configure-pages@v5
