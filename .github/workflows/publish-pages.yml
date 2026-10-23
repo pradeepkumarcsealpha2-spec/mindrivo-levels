@@ -50,7 +50,7 @@ jobs:
               if (level.options.filter(x => String(x) === String(level.answer)).length !== 1) throw new Error('Answer must occur exactly once for ' + id);
               if (!Array.isArray(level.hint) || !level.hint.length || level.hint.some(x => typeof x !== 'string' || !x.trim())) throw new Error('Invalid hints for ' + id);
               if (typeof level.prompt !== 'string' || !level.prompt.trim() || typeof level.explanation !== 'string' || !level.explanation.trim()) throw new Error('Missing prompt/explanation for ' + id);
-              const normalizedPrompt = level.prompt.trim().replace(/\\s+/g, ' ').toLowerCase();
+              const normalizedPrompt = level.prompt.trim().replace(/\s+/g, ' ').toLowerCase();
               if (seenPrompts.has(normalizedPrompt)) throw new Error('Duplicate prompt for levels ' + seenPrompts.get(normalizedPrompt) + ' and ' + id);
               seenPrompts.set(normalizedPrompt, id);
               seen.add(id);
