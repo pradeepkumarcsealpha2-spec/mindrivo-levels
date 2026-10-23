@@ -61,7 +61,8 @@ function makeLevel(id) {
       break;
     }
     case "subtraction": {
-      const [smaller, larger] = pairFromIndex(sequenceIndex + 1);
+      // Skip the bundled 7 - 3 question (normalized minus sign) to avoid a repeat.
+      const [smaller, larger] = pairFromIndex(skipReservedIndex(sequenceIndex + 1, [16]));
       answer = larger - smaller;
       prompt = `${larger} − ${smaller} = ?`;
       opts = options(answer, [answer + 2, Math.max(0, answer - 2), answer + 1]);
